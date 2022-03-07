@@ -2,7 +2,7 @@
 set -e
 
 # Load Options
-while getopts "a:b:c:" o; do
+while getopts "a:b:c:d:e:" o; do
    case "${o}" in
        a)
          export directory=${OPTARG}
@@ -10,11 +10,28 @@ while getopts "a:b:c:" o; do
        b)
          export forceResolution=${OPTARG}
        ;;
-	   c)
+       c)
          export failWhenOutdated=${OPTARG}
+       ;;
+       d)
+         export workspace=${OPTARG}
+       ;;
+       e)
+         export scheme=${OPTARG}
        ;;
   esac
 done
+
+# Workspace sanity check
+if [ ! -z "$workspace" ] && [ -z "$scheme" ]; then
+	echo "When workspace is defined, you must also define a scheme."
+	exit 1
+fi
+
+PROJECT_TYPE=".xcodeproj"
+if [ ! -z "$workspace" ]; then
+	PROJECT_TYPE=".xcworkspace"
+fi
 
 # Change Directory
 if [ "$directory" != "." ]; then
@@ -23,7 +40,7 @@ if [ "$directory" != "." ]; then
 fi
 
 # Identify `Package.resolved` location
-RESOLVED_PATH=$(find . -type f -name "Package.resolved" | grep -v "*/*.xcodeproj/*")
+RESOLVED_PATH=$(find . -type f -name "Package.resolved" | grep "$PROJECT_TYPE")
 CHECKSUM=$(shasum "$RESOLVED_PATH")
 
 echo "Identified Package.resolved at '$RESOLVED_PATH'."
@@ -35,7 +52,12 @@ if [ "$forceResolution" = true ] || [ "$forceResolution" = 'true' ]; then
 fi
 
 # Cleanup Caches
-DERIVED_DATA=$(xcodebuild -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
+XCODEBUILD_SETTINGS=""
+if [ ! -z "$workspace" ]; then
+	XCODEBUILD_SETTINGS="-workspace=\"$workspace\" -scheme=\"$scheme\""
+fi
+
+DERIVED_DATA=$(xcodebuild $XCODEBUILD_SETTINGS -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 SPM_CACHE="~/Library/Caches/org.swift.swiftpm/"
 
 rm -rf "$DERIVED_DATA"
