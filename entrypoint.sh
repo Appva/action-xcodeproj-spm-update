@@ -45,21 +45,23 @@ CHECKSUM=$(shasum "$RESOLVED_PATH")
 
 echo "Identified Package.resolved at '$RESOLVED_PATH'."
 
-# If `forceResolution`, then delete the `Package.resolved`
-if [ "$forceResolution" = true ] || [ "$forceResolution" = 'true' ]; then
-	echo "Deleting Package.resolved to force it to be regenerated under new format."
-	rm -rf "$RESOLVED_PATH" 2> /dev/null
-fi
-
-# Cleanup Caches
+# Find DerivedData folder, needs to be done before deleting the Package.resolved file in case forceResolution is true.
 if [ ! -z "$workspace" ]; then
   DERIVED_DATA=$(xcodebuild -workspace "$workspace" -scheme "$scheme" -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 else
   DERIVED_DATA=$(xcodebuild -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 fi
 
+# If `forceResolution`, then delete the `Package.resolved`
+if [ "$forceResolution" = true ] || [ "$forceResolution" = 'true' ]; then
+	echo "Deleting Package.resolved to force it to be regenerated under new format."
+	rm -rf "$RESOLVED_PATH" 2> /dev/null
+fi
+
+# Define the SPM cache folder
 SPM_CACHE="~/Library/Caches/org.swift.swiftpm/"
 
+# Cleanup Caches
 rm -rf "$DERIVED_DATA"
 rm -rf "$CACHE_PATH"
 
