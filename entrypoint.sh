@@ -52,12 +52,12 @@ if [ "$forceResolution" = true ] || [ "$forceResolution" = 'true' ]; then
 fi
 
 # Cleanup Caches
-XCODEBUILD_SETTINGS=""
 if [ ! -z "$workspace" ]; then
-	XCODEBUILD_SETTINGS="-workspace=\"$workspace\" -scheme=\"$scheme\""
+  DERIVED_DATA=$(xcodebuild -workspace "$workspace" -scheme "$scheme" -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
+else
+  DERIVED_DATA=$(xcodebuild -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 fi
 
-DERIVED_DATA=$(xcodebuild $XCODEBUILD_SETTINGS -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 SPM_CACHE="~/Library/Caches/org.swift.swiftpm/"
 
 rm -rf "$DERIVED_DATA"
@@ -65,7 +65,11 @@ rm -rf "$CACHE_PATH"
 
 # Resolve Dependencies
 echo "::group::xcodebuild resolve dependencies"
-xcodebuild -resolvePackageDependencies
+if [ ! -z "$workspace" ]; then
+  xcodebuild -resolvePackageDependencies -workspace "$workspace" -scheme "$scheme"
+else
+  xcodebuild -resolvePackageDependencies
+fi
 echo "::endgroup"
 
 # Determine Changes
