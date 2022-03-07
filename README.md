@@ -43,6 +43,22 @@ jobs:
           directory: 'iOS'
 ```
 
+If you're using `.xcworkspace` you might need to define its name and a scheme for this workflow to work.  
+**Note:** `scheme:` is required when you define a workspace.
+
+```yaml
+jobs:
+  dependencies:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: GetSidetrack/action-xcodeproj-spm-update@main
+        with:
+          workspace: 'YourProject.xcworkspace'
+          scheme: "YourProjectScheme"
+```
+
+
 If the Package.resolved file has been built with an incompatible version of Xcode, or is in any way corrupted then `xcodebuild` is likely to fail. By setting `forceResolution` to true, it will force Xcode to resolve from nothing and avoid this problem.
 
 ## Full Workflow
