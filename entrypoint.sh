@@ -47,9 +47,9 @@ echo "Identified Package.resolved at '$RESOLVED_PATH'."
 
 # Find DerivedData folder, needs to be done before deleting the Package.resolved file in case forceResolution is true.
 if [ ! -z "$workspace" ]; then
-  DERIVED_DATA=$(xcodebuild -workspace "$workspace" -scheme "$scheme" -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
+  DERIVED_DATA=$(xcodebuild -workspace "$workspace" -scheme "$scheme" -showBuildSettings -disableAutomaticPackageResolution -disablePackageRepositoryCache | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 else
-  DERIVED_DATA=$(xcodebuild -showBuildSettings -disableAutomaticPackageResolution | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
+  DERIVED_DATA=$(xcodebuild -showBuildSettings -disableAutomaticPackageResolution -disablePackageRepositoryCache | grep -m 1 BUILD_DIR | grep -oE "\/.*" | sed 's|/Build/Products||')
 fi
 
 # If `forceResolution`, then delete the `Package.resolved`
@@ -68,9 +68,9 @@ rm -rf "$CACHE_PATH"
 # Resolve Dependencies
 echo "::group::xcodebuild resolve dependencies"
 if [ ! -z "$workspace" ]; then
-  xcodebuild -resolvePackageDependencies -workspace "$workspace" -scheme "$scheme"
+  xcodebuild -resolvePackageDependencies -workspace "$workspace" -scheme "$scheme" -disablePackageRepositoryCache
 else
-  xcodebuild -resolvePackageDependencies
+  xcodebuild -resolvePackageDependencies -disablePackageRepositoryCache
 fi
 echo "::endgroup"
 
